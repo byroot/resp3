@@ -10,6 +10,8 @@ module RESP3
     '+' => :read_line,
     '-' => :read_line,
     ':' => :parse_integer,
+    ',' => :parse_double,
+    '_' => :parse_null,
   }.freeze
   SIGILS = Regexp.union(TYPES.keys.map { |sig| Regexp.new(Regexp.escape(sig)) })
   EOL = /\r\n/
@@ -30,13 +32,30 @@ module RESP3
     end
 
     def parse_integer(scanner)
-      read_line(scanner).to_i
+      Integer(read_line(scanner))
+    end
+
+    def parse_double(scanner)
+      case value = read_line(scanner)
+      when 'inf'
+        Float::INFINITY
+      when '-inf'
+        -Float::INFINITY
+      else
+        Float(value)
+      end
+    end
+
+    def parse_null(scanner)
+      scanner.skip(EOL)
+      nil
     end
 
     def parse_blob(scanner)
       bytesize = parse_integer(scanner)
       blob = scanner.peek(bytesize)
-      scanner.pos += bytesize + 2
+      scanner.pos += bytesize
+      scanner.skip(EOL)
       blob
     end
   end

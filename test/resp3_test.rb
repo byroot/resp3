@@ -15,11 +15,27 @@ class RESP3Test < Minitest::Test
 
   def test_load_integer
     assert_parses 42, ":42\r\n"
+    assert_parses(-42, ":-42\r\n")
+  end
+
+  def test_load_double
+    assert_parses 42.42, ",42.42\r\n"
+    assert_parses(-42.42, ",-42.42\r\n")
+    assert_parses Float::INFINITY, ",inf\r\n"
+    assert_parses(-Float::INFINITY, ",-inf\r\n")
+  end
+
+  def test_load_null
+    assert_parses nil, "_\r\n"
   end
 
   private
 
   def assert_parses(expected, payload)
-    assert_equal(expected, RESP3.load(payload))
+    if expected == nil
+      assert_nil RESP3.load(payload)
+    else
+      assert_equal(expected, RESP3.load(payload))
+    end
   end
 end
