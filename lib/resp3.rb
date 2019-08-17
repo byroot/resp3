@@ -15,6 +15,7 @@ module RESP3
     '(' => :parse_integer,
     ',' => :parse_double,
     '_' => :parse_null,
+    '*' => :parse_array
   }.freeze
   SIGILS = Regexp.union(TYPES.keys.map { |sig| Regexp.new(Regexp.escape(sig)) })
   EOL = /\r\n/
@@ -36,6 +37,15 @@ module RESP3
       else
         raise UnknownType, "Unknown sigil type: #{scanner.peek(1).inspect}"
       end
+    end
+
+    def parse_array(scanner)
+      size = parse_integer(scanner)
+      array = Array.new(size)
+      size.times do |index|
+        array[index] = parse(scanner)
+      end
+      array
     end
 
     def parse_integer(scanner)

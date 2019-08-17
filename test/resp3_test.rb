@@ -30,6 +30,10 @@ class RESP3Test < Minitest::Test
     assert_parses nil, "_\r\n"
   end
 
+  def test_load_array
+    assert_parses [1, 2, 3], "*3\r\n:1\r\n:2\r\n:3\r\n"
+  end
+
   private
 
   def assert_parses(expected, payload)
