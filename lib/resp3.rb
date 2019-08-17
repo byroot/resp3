@@ -5,11 +5,14 @@ require "strscan"
 
 module RESP3
   Error = Class.new(StandardError)
+  UnknownType = Class.new(Error)
+
   TYPES = {
     '$' => :parse_blob,
     '+' => :read_line,
     '-' => :read_line,
     ':' => :parse_integer,
+    '(' => :parse_integer,
     ',' => :parse_double,
     '_' => :parse_null,
   }.freeze
@@ -28,7 +31,11 @@ module RESP3
     end
 
     def parse(scanner)
-      send(TYPES.fetch(scanner.scan(SIGILS)), scanner)
+      if type = scanner.scan(SIGILS)
+        send(TYPES.fetch(type), scanner)
+      else
+        raise UnknownType, "Unknown sigil type: #{scanner.peek(1).inspect}"
+      end
     end
 
     def parse_integer(scanner)

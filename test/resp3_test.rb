@@ -16,6 +16,7 @@ class RESP3Test < Minitest::Test
   def test_load_integer
     assert_parses 42, ":42\r\n"
     assert_parses(-42, ":-42\r\n")
+    assert_parses 3492890328409238509324850943850943825024385, "(3492890328409238509324850943850943825024385\r\n"
   end
 
   def test_load_double
