@@ -30,8 +30,17 @@ class RESP3Test < Minitest::Test
     assert_parses nil, "_\r\n"
   end
 
+  def test_load_boolean
+    assert_parses true, "#t\r\n"
+    assert_parses false, "#f\r\n"
+  end
+
   def test_load_array
     assert_parses [1, 2, 3], "*3\r\n:1\r\n:2\r\n:3\r\n"
+  end
+
+  def test_load_set
+    assert_parses Set['orange', 'apple', true, 100, 999], "~5\r\n+orange\r\n+apple\r\n#t\r\n:100\r\n:999\r\n"
   end
 
   def test_load_map

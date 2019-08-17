@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
 require "resp3/version"
+require "set"
 require "strscan"
 
 module RESP3
   Error = Class.new(StandardError)
   UnknownType = Class.new(Error)
+  SyntaxError = Class.new(Error)
 
   TYPES = {
+    '#' => :parse_boolean,
     '$' => :parse_blob,
     '+' => :read_line,
     '-' => :read_line,
@@ -17,6 +20,7 @@ module RESP3
     '_' => :parse_null,
     '*' => :parse_array,
     '%' => :parse_map,
+    '~' => :parse_set,
   }.freeze
   SIGILS = Regexp.union(TYPES.keys.map { |sig| Regexp.new(Regexp.escape(sig)) })
   EOL = /\r\n/
@@ -40,8 +44,25 @@ module RESP3
       end
     end
 
+    def parse_boolean(scanner)
+      case value = scanner.get_byte
+      when 't'
+        scanner.skip(EOL)
+        true
+      when 'f'
+        scanner.skip(EOL)
+        false
+      else
+        raise SyntaxError, "Expected `t` or `f` after `#`, got: #{value.inspect}"
+      end
+    end
+
     def parse_array(scanner)
       parse_sequence(scanner, parse_integer(scanner))
+    end
+
+    def parse_set(scanner)
+      parse_sequence(scanner, parse_integer(scanner)).to_set
     end
 
     def parse_map(scanner)
