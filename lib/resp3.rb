@@ -15,7 +15,8 @@ module RESP3
     '(' => :parse_integer,
     ',' => :parse_double,
     '_' => :parse_null,
-    '*' => :parse_array
+    '*' => :parse_array,
+    '%' => :parse_map,
   }.freeze
   SIGILS = Regexp.union(TYPES.keys.map { |sig| Regexp.new(Regexp.escape(sig)) })
   EOL = /\r\n/
@@ -40,7 +41,14 @@ module RESP3
     end
 
     def parse_array(scanner)
-      size = parse_integer(scanner)
+      parse_sequence(scanner, parse_integer(scanner))
+    end
+
+    def parse_map(scanner)
+      Hash[*parse_sequence(scanner, parse_integer(scanner) * 2)]
+    end
+
+    def parse_sequence(scanner, size)
       array = Array.new(size)
       size.times do |index|
         array[index] = parse(scanner)
