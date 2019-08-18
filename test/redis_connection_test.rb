@@ -7,51 +7,6 @@ require 'socket'
 class RedisConnectionTest < Minitest::Test
   class RedisServer
     TimeoutError = Class.new(::Timeout::Error)
-    class BufferedIO
-      
-      def initialize(io, timeout: 5)
-        @io = io
-        @buffer = String.new(capacity: 8_196, encoding: Encoding::BINARY)
-        @timeout = timeout
-      end
-
-      def read_line(terminator: "\r\n")
-        until index = @buffer.index(terminator)
-          fill_buffer
-        end
-        line = @buffer.slice!(0, index)
-        @buffer.slice!(0, terminator.bytesize)
-        line
-      end
-
-      def read_bytes(bytes, terminator: "\r\n")
-        full_bytes = bytes
-        full_bytes += terminator.bytesize if terminator
-        while @buffer.bytesize < full_bytes
-          fill_buffer
-        end
-        data = @buffer.slice!(0, bytes)
-        @buffer.slice!(0, terminator.bytesize) if terminator
-        data
-      end
-
-      private
-
-      def fill_buffer
-        loop do
-          case rv = @io.read_nonblock(8_196, @buffer, exception: false)
-          when :wait_readable
-            @io.wait_readable(@timeout) or raise TimeoutError
-          when :wait_writable
-            @io.wait_writeable(@timeout) or raise TimeoutError
-          when String
-            return
-          when nil
-            raise 'EOF' # EOF
-          end
-        end
-      end
-    end
 
     def initialize(host: 'localhost', port: 6379)
       @host = host
@@ -61,12 +16,13 @@ class RedisConnectionTest < Minitest::Test
     end
 
     def call(*args)
-      
+      @socket.write(RESP3.dump(cast_args!(args)))
+      @reader.next_value
     end
 
     def connect
       @socket = TCPSocket.new(@host, @port)
-      @io = BufferedIO.new(@socket)
+      @reader = RESP3::IOReader.new(@socket)
       handshake
     end
 
@@ -75,7 +31,22 @@ class RedisConnectionTest < Minitest::Test
       @socket.write(HELLO)
       @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, true)
       @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
-      p @io.read_line
+      p @reader.next_value
+    end
+
+    def cast_args!(args)
+      args.map! do |arg|
+        case arg
+        when Hash
+          arg.flat_map do |key, value|
+            [key.to_s.upcase, value.to_s]
+          end
+        else
+          arg.to_s
+        end
+      end
+      args.flatten!
+      args
     end
 
     def read_response
@@ -88,6 +59,15 @@ class RedisConnectionTest < Minitest::Test
 
   def test_stuff
     client = RedisServer.new
+    client.connect
+    p client.call('SET', 'foo', 'bar', ex: 60)
+    p client.call('TTL', 'foo')
+    p s = client.call('GET', 'foo')
+    p s.encoding
+  end
+
+  def test_old_redis
+    client = RedisServer.new(port: 6380)
     client.connect
   end
 end

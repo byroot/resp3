@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require "set"
-require "strscan"
 
 require "resp3/version"
 require "resp3/parser"
 require "resp3/serializer"
+require "resp3/io_reader"
 
 module RESP3
   Error = Class.new(StandardError)
@@ -13,10 +13,6 @@ module RESP3
   SyntaxError = Class.new(Error)
 
   class << self
-    def load(payload)
-      Parser.load(payload)
-    end
-
     def dump(payload)
       Serializer.dump(payload)
     end
