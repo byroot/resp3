@@ -11,6 +11,18 @@ class SerializerTest < Minitest::Test
     assert_dumps 42, ":42\r\n"
   end
 
+  def test_dump_true
+    assert_dumps true, "#t\r\n"
+  end
+
+  def test_dump_false
+    assert_dumps false, "#f\r\n"
+  end
+
+  def test_dump_nil
+    assert_dumps nil, "_\r\n"
+  end
+
   def test_dump_big_integer
     assert_dumps 1_000_000_000_000_000_000_000, "(1000000000000000000000\r\n"
   end

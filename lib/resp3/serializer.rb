@@ -10,6 +10,9 @@ module RESP3
       Array => :dump_array,
       Set => :dump_set,
       Hash => :dump_hash,
+      TrueClass => :dump_true,
+      FalseClass => :dump_false,
+      NilClass => :dump_nil,
     }
     private_constant :TYPES
 
@@ -74,6 +77,18 @@ module RESP3
         else
           buffer << '+' << payload << EOL
         end
+      end
+
+      def dump_true(_payload, buffer)
+        buffer << '#t' << EOL
+      end
+
+      def dump_false(_payload, buffer)
+        buffer << '#f' << EOL
+      end
+
+      def dump_nil(_payload, buffer)
+        buffer << '_' << EOL
       end
     end
   end
