@@ -7,6 +7,7 @@ module RESP3
       String => :dump_string,
       Integer => :dump_integer,
       Float => :dump_float,
+      Array => :dump_array,
     }
     private_constant :TYPES
 
@@ -18,6 +19,14 @@ module RESP3
       end
 
       private
+
+      def dump_array(payload, buffer)
+        buffer << '*' << payload.size.to_s << EOL
+        payload.each do |item|
+          dump(item, buffer)
+        end
+        buffer
+      end
 
       def dump_integer(payload, buffer)
         if INTEGER_RANGE.cover?(payload)

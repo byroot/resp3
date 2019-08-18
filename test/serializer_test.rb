@@ -20,6 +20,10 @@ class SerializerTest < Minitest::Test
     assert_dumps(-Float::INFINITY, ",-inf\r\n")
   end
 
+  def test_dump_array
+    assert_dumps [1, 2, 3], "*3\r\n:1\r\n:2\r\n:3\r\n"
+  end
+
   private
 
   def assert_dumps(payload, expected)
