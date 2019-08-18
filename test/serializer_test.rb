@@ -3,7 +3,8 @@ require "test_helper"
 
 class SerializerTest < Minitest::Test
   def test_dump_string
-    assert_dumps "Hello World!", "$12\r\nHello World!\r\n"
+    assert_dumps "Hello World!", "+Hello World!\r\n"
+    assert_dumps "Hello\r\nWorld!", "$13\r\nHello\r\nWorld!\r\n"
   end
 
   def test_dump_integer
@@ -22,6 +23,14 @@ class SerializerTest < Minitest::Test
 
   def test_dump_array
     assert_dumps [1, 2, 3], "*3\r\n:1\r\n:2\r\n:3\r\n"
+  end
+
+  def test_dump_set
+    assert_dumps Set[1, 2, 3], "~3\r\n:1\r\n:2\r\n:3\r\n"
+  end
+
+  def test_dump_hash
+    assert_dumps({'first' => 1, 'second' => 2}, "%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n")
   end
 
   private

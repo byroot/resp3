@@ -8,6 +8,8 @@ module RESP3
       Integer => :dump_integer,
       Float => :dump_float,
       Array => :dump_array,
+      Set => :dump_set,
+      Hash => :dump_hash,
     }
     private_constant :TYPES
 
@@ -24,6 +26,23 @@ module RESP3
         buffer << '*' << payload.size.to_s << EOL
         payload.each do |item|
           dump(item, buffer)
+        end
+        buffer
+      end
+
+      def dump_set(payload, buffer)
+        buffer << '~' << payload.size.to_s << EOL
+        payload.each do |item|
+          dump(item, buffer)
+        end
+        buffer
+      end
+
+      def dump_hash(payload, buffer)
+        buffer << '%' << payload.size.to_s << EOL
+        payload.each_pair do |key, value|
+          dump(key, buffer)
+          dump(value, buffer)
         end
         buffer
       end
@@ -50,7 +69,11 @@ module RESP3
       end
 
       def dump_string(payload, buffer)
-        buffer << '$' << payload.bytesize.to_s << EOL << payload << EOL
+        if !payload.ascii_only? || payload.match?(/[\r\n]/)
+          buffer << '$' << payload.bytesize.to_s << EOL << payload << EOL
+        else
+          buffer << '+' << payload << EOL
+        end
       end
     end
   end
