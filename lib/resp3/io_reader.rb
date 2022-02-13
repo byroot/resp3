@@ -2,9 +2,12 @@
 
 module RESP3
   class IOReader
+    attr_accessor :external_encoding
+
     def initialize(io, timeout: 5, buffer_size: 8_196)
       @buffer_size = buffer_size
       @timeout = timeout
+      @external_encoding = Encoding.default_external
 
       @io = io
       @buffer = String.new(capacity: buffer_size, encoding: Encoding::BINARY)

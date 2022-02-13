@@ -1,12 +1,23 @@
 # frozen_string_literal: true
 
 module RESP3
+  ProtocolError = Class.new(String)
+
+  class Push
+    attr_reader :type, :arguments
+
+    def initialize(type, arguments)
+      @type = type
+      @arguments = arguments
+    end
+  end
+
   module Parser
     TYPES = {
       '#' => :parse_boolean,
       '$' => :parse_blob,
       '+' => :noop,
-      '-' => :noop,
+      '-' => :parse_error,
       ':' => :parse_integer,
       '(' => :parse_integer,
       ',' => :parse_double,
@@ -14,6 +25,7 @@ module RESP3
       '*' => :parse_array,
       '%' => :parse_map,
       '~' => :parse_set,
+      '>' => :parse_push,
     }.freeze
     SIGILS = Regexp.union(TYPES.keys.map { |sig| Regexp.new(Regexp.escape(sig)) })
     EOL = /\r\n/
@@ -34,6 +46,10 @@ module RESP3
         value
       end
 
+      def parse_error(value, _io)
+        ProtocolError.new(value)
+      end
+
       def parse_boolean(value, io)
         case value
         when 't'
@@ -47,6 +63,11 @@ module RESP3
 
       def parse_array(value, io)
         parse_sequence(Integer(value), io)
+      end
+
+      def parse_push(value, io)
+        type, *args = parse_sequence(Integer(value), io)
+        Push.new(type, args)
       end
 
       def parse_set(value, io)
@@ -86,7 +107,7 @@ module RESP3
 
       def parse_blob(value, io)
         bytesize = Integer(value)
-        io.read_bytes(bytesize)
+        io.read_bytes(bytesize).force_encoding(io.external_encoding)
       end
     end
   end

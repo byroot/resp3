@@ -11,6 +11,7 @@ module RESP3
   Error = Class.new(StandardError)
   UnknownType = Class.new(Error)
   SyntaxError = Class.new(Error)
+  TimeoutError = Class.new(Error)
 
   class << self
     def dump(payload)
