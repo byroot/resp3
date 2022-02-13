@@ -47,10 +47,11 @@ class ParserTest < Minitest::Test
   private
 
   def assert_parses(expected, payload)
+    actual = RESP3::IOReader.new(StringIO.new(payload)).next_value
     if expected == nil
-      assert_nil RESP3.load(payload)
+      assert_nil actual 
     else
-      assert_equal(expected, RESP3.load(payload))
+      assert_equal(expected, actual)
     end
   end
 end

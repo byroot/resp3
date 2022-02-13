@@ -72,11 +72,7 @@ module RESP3
       end
 
       def dump_string(payload, buffer)
-        if !payload.ascii_only? || payload.match?(/[\r\n]/)
-          buffer << '$' << payload.bytesize.to_s << EOL << payload << EOL
-        else
-          buffer << '+' << payload << EOL
-        end
+        buffer << '$' << payload.bytesize.to_s << EOL << payload << EOL
       end
 
       def dump_true(_payload, buffer)
